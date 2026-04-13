@@ -122,8 +122,7 @@ namespace MyWorkItem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            item.IsActive = false;
-            item.UpdatedAt = DateTime.UtcNow;
+            db.WorkItems.Remove(item);
             await db.SaveChangesAsync();
 
             TempData["Message"] = "刪除成功。";
