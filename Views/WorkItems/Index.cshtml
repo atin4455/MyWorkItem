@@ -77,11 +77,7 @@ else
                             <a class="btn btn-sm btn-outline-info" asp-action="Details" asp-route-id="@item.Id" asp-route-sort="@sort">查看詳情</a>
                             @if (isConfirmed)
                             {
-                                <form class="d-inline" method="post" asp-action="Revoke" onsubmit="return confirm('確定要將此項目標記回「待確認」嗎？');">
-                                    <input type="hidden" name="itemId" value="@item.Id" />
-                                    <input type="hidden" name="sort" value="@sort" />
-                                    <button class="btn btn-sm btn-warning" type="submit">撤銷確認</button>
-                                </form>
+                                <button class="btn btn-sm btn-warning" type="button" onclick="revokeItem(@item.Id, '@sort')">撤銷確認</button>
                             }
                         </td>
                     </tr>
@@ -121,5 +117,30 @@ else
 
         checks.forEach(c => c.addEventListener("change", refreshState));
         refreshState();
+
+        function revokeItem(itemId, sort) {
+            if (!confirm("確定要將此項目標記回「待確認」嗎？")) {
+                return;
+            }
+
+            const form = document.createElement("form");
+            form.method = "post";
+            form.action = "@Url.Action("Revoke", "WorkItems")";
+
+            const itemIdInput = document.createElement("input");
+            itemIdInput.type = "hidden";
+            itemIdInput.name = "itemId";
+            itemIdInput.value = itemId;
+            form.appendChild(itemIdInput);
+
+            const sortInput = document.createElement("input");
+            sortInput.type = "hidden";
+            sortInput.name = "sort";
+            sortInput.value = sort;
+            form.appendChild(sortInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
     </script>
 }
