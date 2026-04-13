@@ -1,0 +1,36 @@
+@model WorkItem
+@{
+    ViewData["Title"] = "Work Item Detail";
+    var sort = (string?)ViewBag.Sort ?? "desc";
+}
+
+<h2>Work Item 詳情</h2>
+
+<table class="table table-bordered">
+    <tr>
+        <th style="width: 220px;">編號</th>
+        <td>@Model.Id</td>
+    </tr>
+    <tr>
+        <th>標題</th>
+        <td>@Model.Title</td>
+    </tr>
+    <tr>
+        <th>描述</th>
+        <td>@(string.IsNullOrWhiteSpace(Model.Description) ? "-" : Model.Description)</td>
+    </tr>
+    <tr>
+        <th>建立時間</th>
+        <td>@Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+    </tr>
+    <tr>
+        <th>目前狀態（你的）</th>
+        <td>@ViewBag.CurrentStatus</td>
+    </tr>
+    <tr>
+        <th>最後更新時間</th>
+        <td>@(Model.UpdatedAt.HasValue ? Model.UpdatedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") : "-")</td>
+    </tr>
+</table>
+
+<a class="btn btn-secondary" asp-action="Index" asp-route-sort="@sort">返回列表</a>

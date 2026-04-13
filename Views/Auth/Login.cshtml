@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>登入</h2>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form method="post" asp-action="Login">
+    <div class="mb-3">
+        <label class="form-label">帳號</label>
+        <input class="form-control" type="text" name="account" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">密碼</label>
+        <input class="form-control" type="password" name="password" />
+    </div>
+    <button type="submit" class="btn btn-primary">登入</button>
+</form>
+
+<hr />
+<p>測試帳號：</p>
+<ul>
+    <li>admin / admin123</li>
+    <li>user1 / user123</li>
+    <li>user2 / user123</li>
+</ul>

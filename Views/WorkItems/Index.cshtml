@@ -1,0 +1,125 @@
+@model List<WorkItem>
+@{
+    ViewData["Title"] = "Work Items";
+    var sort = (string?)ViewBag.Sort ?? "desc";
+    var statusMap = ViewBag.StatusMap as Dictionary<int, bool> ?? new Dictionary<int, bool>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Work Item List</h2>
+    <div>
+        <a class="btn btn-outline-secondary" asp-action="Index" asp-route-sort="@(sort == "desc" ? "asc" : "desc")">
+            依建立時間排序：@(sort == "desc" ? "新到舊" : "舊到新")
+        </a>
+        @if (Context.Session.GetString("Role") == "Admin")
+        {
+            <a class="btn btn-outline-primary ms-2" asp-controller="AdminWorkItems" asp-action="Index">管理後台</a>
+        }
+        <form class="d-inline ms-2" method="post" asp-controller="Auth" asp-action="Logout">
+            <button class="btn btn-outline-danger" type="submit">登出</button>
+        </form>
+    </div>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">目前無待辦項目</div>
+}
+else
+{
+    <form method="post" asp-action="Confirm" id="confirmForm">
+        <input type="hidden" name="sort" value="@sort" />
+        <div class="mb-2">
+            <button id="confirmBtn" type="submit" class="btn btn-primary" disabled>確認勾選項目</button>
+        </div>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">
+                        <input type="checkbox" id="checkAll" />
+                    </th>
+                    <th>編號</th>
+                    <th>標題</th>
+                    <th>狀態</th>
+                    <th style="width: 260px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var isConfirmed = statusMap.TryGetValue(item.Id, out var confirmed) && confirmed;
+                    <tr class="work-item-row">
+                        <td>
+                            <input type="checkbox" name="selectedIds" value="@item.Id" class="row-check" />
+                        </td>
+                        <td>@item.Id</td>
+                        <td>@item.Title</td>
+                        <td>
+                            @if (isConfirmed)
+                            {
+                                <span class="badge text-bg-success">已確認</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">待確認</span>
+                            }
+                        </td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-info" asp-action="Details" asp-route-id="@item.Id" asp-route-sort="@sort">查看詳情</a>
+                            @if (isConfirmed)
+                            {
+                                <form class="d-inline" method="post" asp-action="Revoke" onsubmit="return confirm('確定要將此項目標記回「待確認」嗎？');">
+                                    <input type="hidden" name="itemId" value="@item.Id" />
+                                    <input type="hidden" name="sort" value="@sort" />
+                                    <button class="btn btn-sm btn-warning" type="submit">撤銷確認</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+}
+
+@section Scripts {
+    <script>
+        const checkAll = document.getElementById("checkAll");
+        const checks = Array.from(document.querySelectorAll(".row-check"));
+        const confirmBtn = document.getElementById("confirmBtn");
+
+        function refreshState() {
+            const selectedCount = checks.filter(c => c.checked).length;
+            if (confirmBtn) confirmBtn.disabled = selectedCount === 0;
+
+            checks.forEach(c => {
+                const row = c.closest(".work-item-row");
+                if (!row) return;
+                row.classList.toggle("table-active", c.checked);
+            });
+
+            if (checkAll) {
+                checkAll.checked = checks.length > 0 && selectedCount === checks.length;
+            }
+        }
+
+        if (checkAll) {
+            checkAll.addEventListener("change", () => {
+                checks.forEach(c => c.checked = checkAll.checked);
+                refreshState();
+            });
+        }
+
+        checks.forEach(c => c.addEventListener("change", refreshState));
+        refreshState();
+    </script>
+}
