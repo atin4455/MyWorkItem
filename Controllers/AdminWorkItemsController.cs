@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MyWorkItem.Data;
 using MyWorkItem.Models;
+using MyWorkItem.Services;
 
 namespace MyWorkItem.Controllers
 {
-    public class AdminWorkItemsController(AppDbContext db) : Controller
+    public class AdminWorkItemsController(IAdminWorkItemService adminWorkItemService) : Controller
     {
         private IActionResult? EnsureAdmin()
         {
@@ -30,9 +29,7 @@ namespace MyWorkItem.Controllers
             var guard = EnsureAdmin();
             if (guard != null) return guard;
 
-            var items = await db.WorkItems
-                .OrderByDescending(x => x.CreatedAt)
-                .ToListAsync();
+            var items = await adminWorkItemService.GetAllItemsAsync();
             return View(items);
         }
 
@@ -60,11 +57,7 @@ namespace MyWorkItem.Controllers
                 return View(item);
             }
 
-            item.CreatedAt = DateTime.UtcNow;
-            item.UpdatedAt = DateTime.UtcNow;
-            item.IsActive = true;
-            db.WorkItems.Add(item);
-            await db.SaveChangesAsync();
+            await adminWorkItemService.CreateAsync(item);
 
             TempData["Message"] = "新增成功。";
             return RedirectToAction(nameof(Index));
@@ -76,7 +69,7 @@ namespace MyWorkItem.Controllers
             var guard = EnsureAdmin();
             if (guard != null) return guard;
 
-            var item = await db.WorkItems.FirstOrDefaultAsync(x => x.Id == id);
+            var item = await adminWorkItemService.GetByIdAsync(id);
             if (item == null) return NotFound();
             return View(item);
         }
@@ -86,9 +79,6 @@ namespace MyWorkItem.Controllers
         {
             var guard = EnsureAdmin();
             if (guard != null) return guard;
-
-            var item = await db.WorkItems.FirstOrDefaultAsync(x => x.Id == id);
-            if (item == null) return NotFound();
 
             if (string.IsNullOrWhiteSpace(form.Title))
             {
@@ -100,10 +90,8 @@ namespace MyWorkItem.Controllers
                 return View(form);
             }
 
-            item.Title = form.Title;
-            item.Description = form.Description;
-            item.UpdatedAt = DateTime.UtcNow;
-            await db.SaveChangesAsync();
+            var updated = await adminWorkItemService.UpdateAsync(id, form);
+            if (!updated) return NotFound();
 
             TempData["Message"] = "更新成功。";
             return RedirectToAction(nameof(Index));
@@ -115,15 +103,12 @@ namespace MyWorkItem.Controllers
             var guard = EnsureAdmin();
             if (guard != null) return guard;
 
-            var item = await db.WorkItems.FirstOrDefaultAsync(x => x.Id == id);
-            if (item == null)
+            var deleted = await adminWorkItemService.DeleteAsync(id);
+            if (!deleted)
             {
                 TempData["Error"] = "資料不存在。";
                 return RedirectToAction(nameof(Index));
             }
-
-            db.WorkItems.Remove(item);
-            await db.SaveChangesAsync();
 
             TempData["Message"] = "刪除成功。";
             return RedirectToAction(nameof(Index));

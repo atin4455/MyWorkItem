@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MyWorkItem.Data;
+using MyWorkItem.Services;
 
 namespace MyWorkItem.Controllers
 {
-    public class AuthController(AppDbContext db) : Controller
+    public class AuthController(IAuthService authService) : Controller
     {
         [HttpGet]
         public IActionResult Login()
@@ -26,7 +25,7 @@ namespace MyWorkItem.Controllers
                 return View();
             }
 
-            var user = await db.Users.FirstOrDefaultAsync(x => x.Account == account && x.Password == password);
+            var user = await authService.ValidateUserAsync(account, password);
             if (user == null)
             {
                 ViewBag.Error = "帳號或密碼錯誤。";
