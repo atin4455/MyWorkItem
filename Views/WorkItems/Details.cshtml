@@ -1,7 +1,7 @@
-@model WorkItem
+@model WorkItemDetailViewModel
 @{
     ViewData["Title"] = "Work Item Detail";
-    var sort = (string?)ViewBag.Sort ?? "desc";
+    var sort = Model.Sort;
 }
 
 <h2>Work Item 詳情</h2>
@@ -25,7 +25,7 @@
     </tr>
     <tr>
         <th>目前狀態（你的）</th>
-        <td>@ViewBag.CurrentStatus</td>
+        <td>@Model.CurrentStatus</td>
     </tr>
     <tr>
         <th>最後更新時間</th>

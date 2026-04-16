@@ -1,8 +1,7 @@
-@model List<WorkItem>
+@model WorkItemIndexViewModel
 @{
     ViewData["Title"] = "Work Items";
-    var sort = (string?)ViewBag.Sort ?? "desc";
-    var statusMap = ViewBag.StatusMap as Dictionary<int, bool> ?? new Dictionary<int, bool>();
+    var sort = Model.Sort;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -30,7 +29,7 @@
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
 
-@if (!Model.Any())
+@if (!Model.Items.Any())
 {
     <div class="alert alert-info">目前無待辦項目</div>
 }
@@ -54,9 +53,8 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
-                    var isConfirmed = statusMap.TryGetValue(item.Id, out var confirmed) && confirmed;
                     <tr class="work-item-row">
                         <td>
                             <input type="checkbox" name="selectedIds" value="@item.Id" class="row-check" />
@@ -64,7 +62,7 @@ else
                         <td>@item.Id</td>
                         <td>@item.Title</td>
                         <td>
-                            @if (isConfirmed)
+                            @if (item.IsConfirmed)
                             {
                                 <span class="badge text-bg-success">已確認</span>
                             }
@@ -75,7 +73,7 @@ else
                         </td>
                         <td>
                             <a class="btn btn-sm btn-outline-info" asp-action="Details" asp-route-id="@item.Id" asp-route-sort="@sort">查看詳情</a>
-                            @if (isConfirmed)
+                            @if (item.IsConfirmed)
                             {
                                 <button class="btn btn-sm btn-warning" type="button" onclick="revokeItem(@item.Id, '@sort')">撤銷確認</button>
                             }

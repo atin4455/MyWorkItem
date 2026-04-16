@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using MyWorkItem.Services;
+using MyWorkItem.ViewModels.WorkItems;
 
 namespace MyWorkItem.Controllers
 {
@@ -14,12 +15,23 @@ namespace MyWorkItem.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            var items = await workItemService.GetActiveItemsAsync(sort);
+            var readDtos = await workItemService.GetActiveItemsAsync(sort);
             var statusMap = await workItemService.GetUserStatusMapAsync(userId.Value);
 
-            ViewBag.Sort = sort;
-            ViewBag.StatusMap = statusMap;
-            return View(items);
+            var vm = new WorkItemIndexViewModel
+            {
+                Sort = sort,
+                Items = readDtos
+                    .Select(dto => new WorkItemListItemViewModel
+                    {
+                        Id = dto.Id,
+                        Title = dto.Title,
+                        IsConfirmed = statusMap.TryGetValue(dto.Id, out var confirmed) && confirmed
+                    })
+                    .ToList()
+            };
+
+            return View(vm);
         }
 
         [HttpGet]
@@ -31,16 +43,24 @@ namespace MyWorkItem.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            var item = await workItemService.GetActiveItemByIdAsync(id);
-            if (item == null)
+            var readDto = await workItemService.GetActiveItemByIdAsync(id);
+            if (readDto == null)
             {
                 return NotFound();
             }
 
-            ViewBag.CurrentStatus = await workItemService.GetCurrentStatusTextAsync(userId.Value, id);
-            ViewBag.Sort = sort;
+            var currentStatus = await workItemService.GetCurrentStatusTextAsync(userId.Value, id);
 
-            return View(item);
+            return View(new WorkItemDetailViewModel
+            {
+                Id = readDto.Id,
+                Title = readDto.Title,
+                Description = readDto.Description,
+                CreatedAt = readDto.CreatedAt,
+                UpdatedAt = readDto.UpdatedAt,
+                CurrentStatus = currentStatus,
+                Sort = sort
+            });
         }
 
         [HttpPost]

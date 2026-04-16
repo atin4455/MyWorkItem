@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using MyWorkItem.Models;
+using MyWorkItem.Dtos;
 using MyWorkItem.Services;
+using MyWorkItem.ViewModels.AdminWorkItems;
 
 namespace MyWorkItem.Controllers
 {
@@ -29,8 +30,18 @@ namespace MyWorkItem.Controllers
             var guard = EnsureAdmin();
             if (guard != null) return guard;
 
-            var items = await adminWorkItemService.GetAllItemsAsync();
-            return View(items);
+            var readDtos = await adminWorkItemService.GetAllItemsAsync();
+            var vm = readDtos
+                .Select(dto => new AdminWorkItemListItemViewModel
+                {
+                    Id = dto.Id,
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    UpdatedAt = dto.UpdatedAt,
+                    IsActive = dto.IsActive
+                })
+                .ToList();
+            return View(vm);
         }
 
         [HttpGet]
@@ -38,26 +49,25 @@ namespace MyWorkItem.Controllers
         {
             var guard = EnsureAdmin();
             if (guard != null) return guard;
-            return View(new WorkItem());
+            return View(new AdminWorkItemFormViewModel());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(WorkItem item)
+        public async Task<IActionResult> Create(AdminWorkItemFormViewModel model)
         {
             var guard = EnsureAdmin();
             if (guard != null) return guard;
 
-            if (string.IsNullOrWhiteSpace(item.Title))
-            {
-                ModelState.AddModelError("Title", "標題為必填。");
-            }
-
             if (!ModelState.IsValid)
             {
-                return View(item);
+                return View(model);
             }
 
-            await adminWorkItemService.CreateAsync(item);
+            await adminWorkItemService.CreateAsync(new AdminWorkItemWriteDto
+            {
+                Title = model.Title,
+                Description = model.Description
+            });
 
             TempData["Message"] = "新增成功。";
             return RedirectToAction(nameof(Index));
@@ -69,28 +79,33 @@ namespace MyWorkItem.Controllers
             var guard = EnsureAdmin();
             if (guard != null) return guard;
 
-            var item = await adminWorkItemService.GetByIdAsync(id);
-            if (item == null) return NotFound();
-            return View(item);
+            var readDto = await adminWorkItemService.GetByIdAsync(id);
+            if (readDto == null) return NotFound();
+
+            return View(new AdminWorkItemFormViewModel
+            {
+                Id = readDto.Id,
+                Title = readDto.Title,
+                Description = readDto.Description
+            });
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, WorkItem form)
+        public async Task<IActionResult> Edit(int id, AdminWorkItemFormViewModel model)
         {
             var guard = EnsureAdmin();
             if (guard != null) return guard;
 
-            if (string.IsNullOrWhiteSpace(form.Title))
-            {
-                ModelState.AddModelError("Title", "標題為必填。");
-            }
-
             if (!ModelState.IsValid)
             {
-                return View(form);
+                return View(model);
             }
 
-            var updated = await adminWorkItemService.UpdateAsync(id, form);
+            var updated = await adminWorkItemService.UpdateAsync(id, new AdminWorkItemWriteDto
+            {
+                Title = model.Title,
+                Description = model.Description
+            });
             if (!updated) return NotFound();
 
             TempData["Message"] = "更新成功。";

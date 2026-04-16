@@ -1,13 +1,13 @@
-using MyWorkItem.Models;
+using MyWorkItem.Dtos;
 
 namespace MyWorkItem.Services
 {
     public interface IAdminWorkItemService
     {
-        Task<List<WorkItem>> GetAllItemsAsync();
-        Task<WorkItem?> GetByIdAsync(int id);
-        Task CreateAsync(WorkItem item);
-        Task<bool> UpdateAsync(int id, WorkItem form);
+        Task<List<AdminWorkItemReadDto>> GetAllItemsAsync();
+        Task<AdminWorkItemReadDto?> GetByIdAsync(int id);
+        Task CreateAsync(AdminWorkItemWriteDto writeDto);
+        Task<bool> UpdateAsync(int id, AdminWorkItemWriteDto writeDto);
         Task<bool> DeleteAsync(int id);
     }
 }
